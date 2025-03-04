@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remove Background</title>
+    
+    <!-- React & Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div id="root" class="w-full max-w-xl"></div>
+
+    <script type="text/babel">
+        function App() {
+            const [image, setImage] = React.useState(null);
+            const [preview, setPreview] = React.useState(null);
+            const [outputImage, setOutputImage] = React.useState(null);
+            const [dragging, setDragging] = React.useState(false);
+            const [error, setError] = React.useState("");
+            const [loading, setLoading] = React.useState(false);
+
+            // Validate and set uploaded file
+            const handleFileChange = (file) => {
+                if (!file) return;
+
+                // Validate file type
+                const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+                if (!allowedTypes.includes(file.type)) {
+                    setError("Only JPG, JPEG, or PNG files are allowed.");
+                    return;
+                }
+
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    setError("File size must be under 5MB.");
+                    return;
+                }
+
+                setError("");
+                setImage(file);
+                setPreview(URL.createObjectURL(file));
+            };
+
+            // Handle Drag & Drop
+            const handleDrop = (e) => {
+                e.preventDefault();
+                setDragging(false);
+                if (e.dataTransfer.files.length) {
+                    handleFileChange(e.dataTransfer.files[0]);
+                }
+            };
+
+            // Upload and process image
+            const handleUpload = async () => {
+                if (!image) return;
+                
+                setLoading(true); // Show spinner while processing
+                const formData = new FormData();
+                formData.append("image", image);
+
+                try {
+                    const response = await fetch("http://127.0.0.1:5000/remove-bg", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        setOutputImage(URL.createObjectURL(blob));
+                    } else {
+                        alert("Error processing image.");
+                    }
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Something went wrong.");
+                } finally {
+                    setLoading(false); // Hide spinner after processing
+                }
+            };
+
+            // Reset everything
+            const handleReset = () => {
+                setImage(null);
+                setPreview(null);
+                setOutputImage(null);
+                setError("");
+            };
+
+            return (
+                <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <h2 className="text-xl font-semibold text-center mb-4">Remove Background from Image</h2>
+                    
+                    {/* Drag and Drop Area */}
+                    <div
+                        className={`border-2 border-dashed p-6 flex flex-col items-center justify-center rounded-lg cursor-pointer transition-all ${
+                            dragging ? "border-blue-500 bg-blue-100" : "border-gray-400 bg-gray-50"
+                        }`}
+                        onDragOver={(e) => {
+                            e.preventDefault();
+                            setDragging(true);
+                        }}
+                        onDragLeave={() => setDragging(false)}
+                        onDrop={handleDrop}
+                        onClick={() => document.getElementById("fileInput").click()}
+                    >
+                        {preview ? (
+                            <img src={preview} alt="Preview" className="w-48 h-48 object-cover rounded-md" />
+                        ) : (
+                            <p className="text-gray-600">Drag & Drop an image or Click to Upload</p>
+                        )}
+                    </div>
+
+                    {/* Error Message */}
+                    {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
+                    {/* File Input (Hidden) */}
+                    <input
+                        id="fileInput"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFileChange(e.target.files[0])}
+                    />
+
+                    {/* Upload Button with Spinner */}
+                    <button
+                        className={`w-full py-2 mt-4 rounded-md flex items-center justify-center transition ${
+                            image && !loading
+                                ? "bg-blue-600 text-white hover:bg-blue-700"
+                                : "bg-gray-400 text-gray-200 cursor-not-allowed"
+                        }`}
+                        onClick={handleUpload}
+                        disabled={!image || loading}
+                    >
+                        {loading ? (
+                            <div className="flex items-center gap-2">
+                                <svg className="animate-spin h-5 w-5 mr-2 border-4 border-white border-t-transparent rounded-full" viewBox="0 0 24 24"></svg>
+                                Processing...
+                            </div>
+                        ) : (
+                            "Remove Background"
+                        )}
+                    </button>
+
+                    {/* Processed Image */}
+                    {outputImage && (
+                        <div className="mt-6 text-center">
+                            <h3 className="text-lg font-semibold mb-2">Processed Image:</h3>
+                            <img src={outputImage} alt="Processed" className="w-48 h-48 object-cover rounded-md mx-auto" />
+                            <a
+                                href={outputImage}
+                                download="output.png"
+                                className="block mt-3 text-blue-600 hover:underline"
+                            >
+                                Download Image
+                            </a>
+                            <button
+                                className="mt-4 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition"
+                                onClick={handleReset}
+                            >
+                                Upload New Image
+                            </button>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+    </script>
+
+</body>
+</html>
