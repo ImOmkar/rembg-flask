@@ -6,7 +6,7 @@ import os
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
+CORS(app, resources={r"/remove-bg": {"origins": "*"}})  # Allow all origins
 
 @app.route("/")
 def home():
