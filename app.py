@@ -1,5 +1,5 @@
 from flask import Flask, request, send_file, render_template
-from rembg import remove
+from rembg import remove, new_session
 from PIL import Image
 import io
 import os
@@ -7,6 +7,9 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
+
+# Use the lighter "u2netp" model
+session = new_session(model_name="u2netp")
 
 @app.route("/")
 def home():
@@ -20,7 +23,8 @@ def remove_bg():
     file = request.files["image"]
     image = Image.open(file.stream)
 
-    output = remove(image)
+    # Pass the session to prevent reloading the model
+    output = remove(image, session=session)
     img_io = io.BytesIO()
     output.save(img_io, format="PNG")
     img_io.seek(0)
