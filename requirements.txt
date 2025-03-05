@@ -3,3 +3,4 @@ gunicorn==23.0.0
 pillow==11.1.0
 rembg==2.0.63
 onnxruntime
+flask-cors
