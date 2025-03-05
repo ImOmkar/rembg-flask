@@ -6,7 +6,7 @@ import os
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app) 
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 
 @app.route("/")
 def home():
@@ -28,4 +28,4 @@ def remove_bg():
     return send_file(img_io, mimetype="image/png", as_attachment=True, download_name="output.png")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", debug=True)
