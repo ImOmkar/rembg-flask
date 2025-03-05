@@ -72,7 +72,8 @@
                 try {
                     const response = await fetch("/remove-bg", {
                         method: "POST",
-                        body: formData
+                        body: formData,
+                        timeout: 15000, // 15 seconds
                     });
 
                     if (response.ok) {
