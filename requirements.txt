@@ -9,7 +9,6 @@ click==8.1.8
 click-default-group==1.2.4
 colorama==0.4.4
 coloredlogs==15.0.1
-command-not-found==0.3
 cryptography==3.4.8
 cupshelpers==1.0
 dbus-python==1.2.18
